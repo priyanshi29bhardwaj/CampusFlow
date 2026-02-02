@@ -1,0 +1,5 @@
+.DS_Store/Users/apple/Desktop/pbl/.gitignore
+node_modules/
+.env
+.next/
+dist/
