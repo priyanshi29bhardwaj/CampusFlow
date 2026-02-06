@@ -42,7 +42,7 @@ export default function DashboardPage() {
       try {
         setIsLoading(true)
         const [clubsRes, eventsRes] = await Promise.all([
-          fetch("/api/clubs"),
+          fetch("http://localhost:3001/api/clubs"),
           fetch("/api/events"),
         ])
 
