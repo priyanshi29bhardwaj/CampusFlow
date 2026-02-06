@@ -17,6 +17,7 @@ interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
   token: string | null
+  loading: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => void
   updateUser: (user: Partial<User>) => void
@@ -34,6 +35,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+
   const router = useRouter()
 
   /* =========================
@@ -43,6 +46,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (typeof window !== "undefined") {
       const savedUser = localStorage.getItem("user")
       const savedToken = localStorage.getItem("token")
+      
+      if (!savedToken) {
+        setLoading(false)
+        return
+      }
 
       if (savedToken) setToken(savedToken)
 
@@ -51,7 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(JSON.parse(savedUser))
         } catch {
           localStorage.removeItem("user")
-        }
+        }finally {
+          setLoading(false)
+}
+
       }
     }
   }, [])
@@ -155,16 +166,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user && !!token,
-        token,
-        login,
-        logout,
-        updateUser,
-        signup,
-      }}
-    >
+  value={{
+    user,
+    isAuthenticated: !!user && !!token,
+    token,
+    login,
+    loading,
+    logout,
+    updateUser,
+    signup,
+  }}
+>
       {children}
     </AuthContext.Provider>
   )
