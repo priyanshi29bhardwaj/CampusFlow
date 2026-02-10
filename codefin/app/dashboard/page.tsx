@@ -37,6 +37,7 @@ export default function DashboardPage() {
     cinefelia: "/film-reel-movie-logo.jpg",
   }
 
+  // Fetch clubs + event counts
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -70,6 +71,7 @@ export default function DashboardPage() {
     fetchData()
   }, [])
 
+  // Refresh counts when clubs change
   useEffect(() => {
     const fetchEventCounts = async () => {
       try {
@@ -87,12 +89,10 @@ export default function DashboardPage() {
       }
     }
 
-    if (clubs.length > 0) {
-      fetchEventCounts()
-    }
+    if (clubs.length > 0) fetchEventCounts()
   }, [clubs.length])
 
-  // Fetch ONLY this club owner's events
+  // Fetch club owner's events
   useEffect(() => {
     const fetchMyEvents = async () => {
       if (userRole !== "club_owner" || !userClubId) return
@@ -128,6 +128,7 @@ export default function DashboardPage() {
         <p className="text-muted-foreground">Discover and manage university events across all clubs</p>
       </div>
 
+      {/* Search */}
       <div className="mb-8">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
@@ -136,64 +137,47 @@ export default function DashboardPage() {
             placeholder="Search clubs..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-card text-card-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
       </div>
 
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-card text-card-foreground border border-border rounded-lg p-6">
-          <p className="text-sm text-muted-foreground mb-1">Total Clubs</p>
-          <p className="text-3xl font-bold text-primary">{clubs.length}</p>
-        </div>
-        <div className="bg-card text-card-foreground border border-border rounded-lg p-6">
-          <p className="text-sm text-muted-foreground mb-1">Active Events</p>
-          <p className="text-3xl font-bold text-primary">{totalEvents}</p>
-        </div>
-        <div className="bg-card text-card-foreground border border-border rounded-lg p-6">
-          <p className="text-sm text-muted-foreground mb-1">Upcoming Events</p>
-          <p className="text-3xl font-bold text-primary">{upcomingEvents}</p>
-        </div>
+        <StatCard title="Total Clubs" value={clubs.length} />
+        <StatCard title="Active Events" value={totalEvents} />
+        <StatCard title="Upcoming Events" value={upcomingEvents} />
       </div>
 
-      {/* Clubs Grid */}
-      <div className="mb-4">
-        <h2 className="text-2xl font-bold mb-6">
-          College Clubs {searchQuery && `(${filteredClubs.length} found)`}
-        </h2>
+      {/* Clubs */}
+      <SectionTitle title={`College Clubs ${searchQuery ? `(${filteredClubs.length} found)` : ""}`} />
 
-        {isLoading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <p className="mt-4 text-muted-foreground">Loading clubs...</p>
-          </div>
-        ) : filteredClubs.length === 0 ? (
-          <div className="bg-card border border-border rounded-lg p-8 text-center">
-            <p className="text-muted-foreground">No clubs found matching "{searchQuery}"</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredClubs.map((club) => {
-              const clubKey = club.name.toLowerCase()
-              return (
-                <ClubCard
-                  key={club.id}
-                  id={club.id}
-                  name={club.name}
-                  logo={clubLogos[clubKey] || "/placeholder-logo.svg"}
-                  description={club.description}
-                  eventCount={eventCounts[club.id] || 0}
-                />
-              )
-            })}
-          </div>
-        )}
-      </div>
+      {isLoading ? (
+        <LoadingState />
+      ) : filteredClubs.length === 0 ? (
+        <EmptyState message={`No clubs found matching "${searchQuery}"`} />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredClubs.map((club) => {
+            const clubKey = club.name.toLowerCase()
+            return (
+              <ClubCard
+                key={club.id}
+                id={club.id}
+                name={club.name}
+                logo={clubLogos[clubKey] || "/placeholder-logo.svg"}
+                description={club.description}
+                eventCount={eventCounts[club.id] || 0}
+              />
+            )
+          })}
+        </div>
+      )}
 
       {/* ================= MY CLUB EVENTS ================= */}
       {userRole === "club_owner" && (
         <div className="mt-16">
-          <h2 className="text-2xl font-bold mb-6">My Club Events</h2>
+          <SectionTitle title="My Club Events" />
 
           {myEvents.length === 0 ? (
             <p className="text-muted-foreground">You haven't created any events yet.</p>
@@ -211,26 +195,67 @@ export default function DashboardPage() {
                     </p>
                   </div>
 
-                  <Button
-                    variant="destructive"
-                    onClick={async () => {
-                      if (!confirm("Delete this event?")) return
-                      try {
-                        await apiRequest(`/api/events/${event.id}`, { method: "DELETE" })
-                        setMyEvents((prev) => prev.filter((e) => e.id !== event.id))
-                      } catch (err: any) {
-                        alert(err.message)
-                      }
-                    }}
-                  >
-                    Delete
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button
+                      variant="secondary"
+                      onClick={() => router.push(`/dashboard/event/${event.id}/registrations`)}
+                    >
+                      View Registrations
+                    </Button>
+
+                    <Button
+                      variant="destructive"
+                      onClick={async () => {
+                        if (!confirm("Delete this event?")) return
+                        try {
+                          await apiRequest(`/api/events/${event.id}`, { method: "DELETE" })
+                          setMyEvents((prev) => prev.filter((e) => e.id !== event.id))
+                        } catch (err: any) {
+                          alert(err.message)
+                        }
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+/* ---------- Small UI helpers ---------- */
+
+function StatCard({ title, value }: { title: string; value: number }) {
+  return (
+    <div className="bg-card border border-border rounded-lg p-6">
+      <p className="text-sm text-muted-foreground mb-1">{title}</p>
+      <p className="text-3xl font-bold text-primary">{value}</p>
+    </div>
+  )
+}
+
+function SectionTitle({ title }: { title: string }) {
+  return <h2 className="text-2xl font-bold mb-6">{title}</h2>
+}
+
+function LoadingState() {
+  return (
+    <div className="text-center py-12">
+      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <p className="mt-4 text-muted-foreground">Loading...</p>
+    </div>
+  )
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="bg-card border border-border rounded-lg p-8 text-center">
+      <p className="text-muted-foreground">{message}</p>
     </div>
   )
 }
