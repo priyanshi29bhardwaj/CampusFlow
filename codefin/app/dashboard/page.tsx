@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { apiRequest } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 interface Club {
   id: string
@@ -128,6 +129,27 @@ export default function DashboardPage() {
         <p className="text-muted-foreground">Discover and manage university events across all clubs</p>
       </div>
 
+      {/* ===== VENUE BOOKING NAV BUTTONS ===== */}
+<div className="mb-8 flex gap-4 flex-wrap">
+
+{userRole === "club_owner" && (
+  <Link href="/dashboard/my-bookings">
+    <Button variant="outline" className="rounded-lg">
+      My Venue Booking Requests
+    </Button>
+  </Link>
+)}
+
+{userRole === "admin" && (
+  <Link href="/dashboard/admin-bookings">
+    <Button className="rounded-lg">
+      Manage Venue Booking Requests
+    </Button>
+  </Link>
+)}
+
+</div>
+
       {/* Search */}
       <div className="mb-8">
         <div className="relative">
@@ -174,7 +196,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ================= MY CLUB EVENTS ================= */}
+      {/* MY CLUB EVENTS */}
       {userRole === "club_owner" && (
         <div className="mt-16">
           <SectionTitle title="My Club Events" />
@@ -228,7 +250,7 @@ export default function DashboardPage() {
   )
 }
 
-/* ---------- Small UI helpers ---------- */
+/* ---------- UI Helpers ---------- */
 
 function StatCard({ title, value }: { title: string; value: number }) {
   return (

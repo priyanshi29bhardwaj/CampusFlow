@@ -10,5 +10,6 @@ router.get('/', eventController.listEvents);
 router.get('/:id', eventController.getEvent);
 router.post('/:id/register', auth, eventController.registerForEvent);
 router.delete('/:id', auth, roleCheck(['club_owner','admin']), eventController.deleteEvent);
+router.get('/:id/registrations', auth, roleCheck(['club_owner','admin']), eventController.getEventRegistrations);
 
 module.exports = router;

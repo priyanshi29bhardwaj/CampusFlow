@@ -1,6 +1,8 @@
-// controllers/eventController.js
 const db = require('../config/database');
 
+/* =====================================================
+   CREATE EVENT
+===================================================== */
 exports.createEvent = async (req, res) => {
   try {
     const {
@@ -16,24 +18,27 @@ exports.createEvent = async (req, res) => {
 
     let finalClubId;
 
+    // 🔥 FIX: DO NOT convert UUIDs to Number
     if (req.user.role === 'club_owner') {
       if (!req.user.clubId) {
         return res.status(403).json({
-          error: 'Your account is not associated with a club. Contact admin.',
+          error: 'Your account is not associated with a club.'
         });
       }
-      finalClubId = req.user.clubId;
+
+      finalClubId = req.user.clubId; // ✅ UUID string
+
     } else if (req.user.role === 'admin') {
-      finalClubId = req.body.clubId;
+      finalClubId = req.body.clubId; // ✅ UUID string
     } else {
       return res.status(403).json({
-        error: 'Only club owners or admins can create events.',
+        error: 'Only club owners or admins can create events.'
       });
     }
 
     if (!name || !startTime || !endTime) {
       return res.status(400).json({
-        error: 'Missing required fields: name, startTime, endTime',
+        error: 'Missing required fields: name, startTime, endTime'
       });
     }
 
@@ -72,11 +77,15 @@ exports.createEvent = async (req, res) => {
     res.json(rows[0]);
 
   } catch (err) {
-    console.error(err);
+    console.error('Create Event Error:', err);
     res.status(500).json({ error: err.message });
   }
 };
 
+
+/* =====================================================
+   LIST EVENTS
+===================================================== */
 exports.listEvents = async (req, res) => {
   try {
     const { rows } = await db.query('SELECT * FROM events ORDER BY start_time DESC');
@@ -86,6 +95,10 @@ exports.listEvents = async (req, res) => {
   }
 };
 
+
+/* =====================================================
+   GET SINGLE EVENT
+===================================================== */
 exports.getEvent = async (req, res) => {
   try {
     const { rows } = await db.query('SELECT * FROM events WHERE id=$1', [req.params.id]);
@@ -96,6 +109,10 @@ exports.getEvent = async (req, res) => {
   }
 };
 
+
+/* =====================================================
+   REGISTER FOR EVENT
+===================================================== */
 exports.registerForEvent = async (req, res) => {
   try {
     const eventId = req.params.id;
@@ -124,6 +141,10 @@ exports.registerForEvent = async (req, res) => {
   }
 };
 
+
+/* =====================================================
+   UPDATE EVENT
+===================================================== */
 exports.updateEvent = async (req, res) => {
   try {
     const eventId = req.params.id;
@@ -141,16 +162,25 @@ exports.updateEvent = async (req, res) => {
 
     const { name, description, startTime, endTime } = req.body;
 
-    const q = `UPDATE events SET name=$1, description=$2, start_time=$3, end_time=$4 WHERE id=$5 RETURNING *`;
-    const { rows } = await db.query(q, [name, description, startTime, endTime, eventId]);
+    const q = `
+      UPDATE events
+      SET name=$1, description=$2, start_time=$3, end_time=$4
+      WHERE id=$5 RETURNING *
+    `;
 
+    const { rows } = await db.query(q, [name, description, startTime, endTime, eventId]);
     res.json(rows[0]);
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
 
+
+/* =====================================================
+   DELETE EVENT
+===================================================== */
 exports.deleteEvent = async (req, res) => {
   try {
     const eventId = req.params.id;
@@ -162,17 +192,62 @@ exports.deleteEvent = async (req, res) => {
 
     const eventClubId = eventCheck.rows[0].club_id;
 
-    // 🔒 Only owner of that club OR admin can delete
     if (req.user.role === 'club_owner' && eventClubId !== req.user.clubId) {
       return res.status(403).json({ error: "You can only delete your own club's events" });
     }
 
     await db.query('DELETE FROM events WHERE id=$1', [eventId]);
-
     res.json({ message: 'Event deleted successfully' });
 
   } catch (err) {
     console.error('Delete Event Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+/* =====================================================
+   GET EVENT REGISTRATIONS
+===================================================== */
+exports.getEventRegistrations = async (req, res) => {
+  try {
+    const eventId = req.params.id;
+
+    const eventCheck = await db.query(
+      'SELECT club_id FROM events WHERE id = $1',
+      [eventId]
+    );
+
+    if (eventCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    const eventClubId = eventCheck.rows[0].club_id;
+
+    if (req.user.role === 'club_owner' && eventClubId !== req.user.clubId) {
+      return res.status(403).json({
+        error: "You can only view your club's event registrations"
+      });
+    }
+
+    const q = `
+      SELECT 
+        u.first_name || ' ' || u.last_name AS name,
+        u.email,
+        er.number_of_tickets,
+        er.total_amount,
+        er.payment_status
+      FROM event_registrations er
+      JOIN users u ON u.id = er.user_id
+      WHERE er.event_id = $1
+      ORDER BY u.first_name
+    `;
+
+    const { rows } = await db.query(q, [eventId]);
+    res.json(rows);
+
+  } catch (err) {
+    console.error('Registrations Error:', err);
     res.status(500).json({ error: err.message });
   }
 };

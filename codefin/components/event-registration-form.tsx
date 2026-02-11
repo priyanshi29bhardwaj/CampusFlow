@@ -65,20 +65,27 @@ export function EventRegistrationForm({ eventId }: EventRegistrationFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+  
+    const selectedEventId = formData.eventId || eventId
+  
+    if (!selectedEventId) {
+      alert("Please select an event")
+      return
+    }
+  
     try {
-      await apiRequest(`/api/events/${formData.eventId}/register`, {
+      await apiRequest(`/api/events/${selectedEventId}/register`, {
         method: "POST",
         body: JSON.stringify({
-          numberOfTickets: parseInt(formData.numberOfTickets),
+          numberOfTickets: Number(formData.numberOfTickets),
           paymentMethod: formData.paymentMethod,
           transactionId: formData.transactionId,
         }),
       })
-      setSubmitted(true)
-      setTimeout(() => setSubmitted(false), 5000)
-    } catch (error: any) {
-      console.error("Registration failed:", error)
-      alert(error.message || "Registration failed. Please try again.")
+  
+      setSubmitted(true) // THIS was also missing
+    } catch (err: any) {
+      alert(err.message || "Registration failed")
     }
   }
 
