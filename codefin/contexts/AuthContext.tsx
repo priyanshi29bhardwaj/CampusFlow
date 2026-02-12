@@ -68,7 +68,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   /* =========================
-     LOGIN
+  AUTO LOGOUT AFTER 45 MIN
+========================= */
+useEffect(() => {
+  if (!token) return
+
+  const logoutTimer = setTimeout(() => {
+    logout()
+  }, 15 * 60 * 1000) // 45 minutes
+
+  return () => clearTimeout(logoutTimer)
+}, [token])
+
+
+  /* =========================
+    LOGIN
   ========================= */
   const login = async (email: string, password: string) => {
     const response = await fetch("/api/auth/login", {
@@ -103,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   /* =========================
-     SIGNUP
+    SIGNUP
   ========================= */
   const signup = async (
     email: string,
@@ -147,7 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   /* =========================
-     LOGOUT
+    LOGOUT
   ========================= */
   const logout = () => {
     setUser(null)

@@ -25,6 +25,8 @@ app.use('/api/registrations', require('./routes/registrations'));
 app.use('/api/proposals', require('./routes/proposals'));
 app.use('/api/clubs', require('./routes/clubs'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/analytics', require('./routes/analytics'));
+
 
 // 🚀 Start the server
 const PORT = process.env.PORT || 3001;
