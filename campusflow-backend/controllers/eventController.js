@@ -1,4 +1,6 @@
 const db = require('../config/database');
+const { sendRegistrationEmail } = require('../utils/mailer');
+
 
 /* =====================================================
    CREATE EVENT
@@ -18,18 +20,16 @@ exports.createEvent = async (req, res) => {
 
     let finalClubId;
 
-    // 🔥 FIX: DO NOT convert UUIDs to Number
     if (req.user.role === 'club_owner') {
       if (!req.user.clubId) {
         return res.status(403).json({
           error: 'Your account is not associated with a club.'
         });
       }
-
-      finalClubId = req.user.clubId; // ✅ UUID string
+      finalClubId = req.user.clubId;
 
     } else if (req.user.role === 'admin') {
-      finalClubId = req.body.clubId; // ✅ UUID string
+      finalClubId = req.body.clubId;
     } else {
       return res.status(403).json({
         error: 'Only club owners or admins can create events.'
@@ -38,19 +38,8 @@ exports.createEvent = async (req, res) => {
 
     if (!name || !startTime || !endTime) {
       return res.status(400).json({
-        error: 'Missing required fields: name, startTime, endTime'
+        error: 'Missing required fields'
       });
-    }
-
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      return res.status(400).json({ error: 'Invalid start/end time' });
-    }
-
-    if (start >= end) {
-      return res.status(400).json({ error: 'startTime must be before endTime' });
     }
 
     const q = `
@@ -111,7 +100,7 @@ exports.getEvent = async (req, res) => {
 
 
 /* =====================================================
-   REGISTER FOR EVENT
+   REGISTER FOR EVENT + SEND EMAIL
 ===================================================== */
 exports.registerForEvent = async (req, res) => {
   try {
@@ -119,24 +108,58 @@ exports.registerForEvent = async (req, res) => {
     const { numberOfTickets = 1, paymentMethod, transactionId } = req.body;
     const userId = req.user.id;
 
-    const ev = await db.query('SELECT registration_fee FROM events WHERE id=$1', [eventId]);
-    if (ev.rows.length === 0) return res.status(404).json({ error: 'Event not found' });
+    /* GET EVENT DETAILS */
+    const ev = await db.query(
+      `SELECT e.name, e.start_time, e.registration_fee,
+              v.name AS venue_name
+       FROM events e
+       LEFT JOIN venues v ON e.venue_id = v.id
+       WHERE e.id=$1`,
+      [eventId]
+    );
 
-    const total = Number(ev.rows[0].registration_fee || 0) * Number(numberOfTickets);
+    if (ev.rows.length === 0) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
 
-    const q = `
+    const event = ev.rows[0];
+
+    const total =
+      Number(event.registration_fee || 0) * Number(numberOfTickets);
+
+    /* INSERT REGISTRATION */
+    const insertQuery = `
       INSERT INTO event_registrations
       (event_id, user_id, number_of_tickets, total_amount, payment_method, transaction_id, payment_status)
       VALUES ($1,$2,$3,$4,$5,$6,$7)
       RETURNING *
     `;
 
-    const values = [eventId, userId, numberOfTickets, total, paymentMethod, transactionId, 'completed'];
-    const { rows } = await db.query(q, values);
+    const { rows } = await db.query(insertQuery, [
+      eventId,
+      userId,
+      numberOfTickets,
+      total,
+      paymentMethod,
+      transactionId,
+      'completed'
+    ]);
+
+    /* SEND EMAIL */
+    try {
+      await sendRegistrationEmail(req.user.email, {
+        name: event.name,
+        start_time: event.start_time,
+        venue_name: event.venue_name
+      });
+    } catch (emailErr) {
+      console.error("Email sending failed:", emailErr);
+    }
 
     res.json(rows[0]);
+
   } catch (err) {
-    console.error(err);
+    console.error("Registration Error:", err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -162,17 +185,14 @@ exports.updateEvent = async (req, res) => {
 
     const { name, description, startTime, endTime } = req.body;
 
-    const q = `
-      UPDATE events
-      SET name=$1, description=$2, start_time=$3, end_time=$4
-      WHERE id=$5 RETURNING *
-    `;
+    const { rows } = await db.query(
+      `UPDATE events SET name=$1, description=$2, start_time=$3, end_time=$4 WHERE id=$5 RETURNING *`,
+      [name, description, startTime, endTime, eventId]
+    );
 
-    const { rows } = await db.query(q, [name, description, startTime, endTime, eventId]);
     res.json(rows[0]);
 
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -200,7 +220,6 @@ exports.deleteEvent = async (req, res) => {
     res.json({ message: 'Event deleted successfully' });
 
   } catch (err) {
-    console.error('Delete Event Error:', err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -213,24 +232,7 @@ exports.getEventRegistrations = async (req, res) => {
   try {
     const eventId = req.params.id;
 
-    const eventCheck = await db.query(
-      'SELECT club_id FROM events WHERE id = $1',
-      [eventId]
-    );
-
-    if (eventCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Event not found' });
-    }
-
-    const eventClubId = eventCheck.rows[0].club_id;
-
-    if (req.user.role === 'club_owner' && eventClubId !== req.user.clubId) {
-      return res.status(403).json({
-        error: "You can only view your club's event registrations"
-      });
-    }
-
-    const q = `
+    const { rows } = await db.query(`
       SELECT 
         u.first_name || ' ' || u.last_name AS name,
         u.email,
@@ -241,13 +243,11 @@ exports.getEventRegistrations = async (req, res) => {
       JOIN users u ON u.id = er.user_id
       WHERE er.event_id = $1
       ORDER BY u.first_name
-    `;
+    `, [eventId]);
 
-    const { rows } = await db.query(q, [eventId]);
     res.json(rows);
 
   } catch (err) {
-    console.error('Registrations Error:', err);
     res.status(500).json({ error: err.message });
   }
 };
