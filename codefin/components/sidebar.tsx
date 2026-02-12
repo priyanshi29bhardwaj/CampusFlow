@@ -5,6 +5,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LayoutDashboard, Calendar, Plus, MapPin, FileText, QrCode, Bell, ChevronDown, Menu, X } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
+import { BarChart3 } from "lucide-react"
+
 
 export function Sidebar() {
   const [isOpen, setIsOpen] = useState(true)
@@ -30,6 +32,12 @@ export function Sidebar() {
       href: "/create-event",
       icon: Plus,
       roles: ["club_owner", "admin"], // Only club owners
+    },
+    {
+      label: "Analytics",
+      href: "/dashboard/analytics",
+      icon: BarChart3,
+      roles: ["club_owner"]
     },
     {
       label: "Venue Booking",
