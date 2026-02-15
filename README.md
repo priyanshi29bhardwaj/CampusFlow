@@ -209,16 +209,6 @@ http://localhost:3000
 
 ---
 
-## 🎓 Academic Details
-
-**Project Name:** CampusFlow  
-**Course:** B.Tech CSE  
-**University:** Manipal University Jaipur  
-**Guide:** Girish Sharma  
-**Developer:** Priyanshi Bhardwaj  
-**Enrollment ID:** 23FE10CSE00229  
-
----
 
 ## 🚀 Future Improvements
 
