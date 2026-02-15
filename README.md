@@ -114,22 +114,41 @@ CampusFlow introduces:
 ## 📸 Screenshots
 
 ### 🏟️ Venue Booking
-<img width="2934" height="1642" alt="image" src="https://github.com/user-attachments/assets/9f2b6888-bf3e-4484-8f75-4e74111a6093" />
-<img width="1880" height="1116" alt="image" src="https://github.com/user-attachments/assets/dcd6e1be-4a00-46f3-8325-ba2abdcb1d5f" />
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/9f2b6888-bf3e-4484-8f75-4e74111a6093" width="900"/>
+  <br><br>
+  <img src="https://github.com/user-attachments/assets/dcd6e1be-4a00-46f3-8325-ba2abdcb1d5f" width="900"/>
+</p>
+
+---
 
 ### 🧾 Admin Manage Booking Requests
-<img width="2892" height="1598" alt="image" src="https://github.com/user-attachments/assets/dfdfae28-8c4b-4664-9eee-4737d6d43b86" />
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/dfdfae28-8c4b-4664-9eee-4737d6d43b86" width="900"/>
+</p>
+
+---
 
 ### 👥 View Event Registrations
-<img width="2754" height="978" alt="image" src="https://github.com/user-attachments/assets/f3843f34-f54c-4cb6-9e26-a3221f2b4b4c" />
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/f3843f34-f54c-4cb6-9e26-a3221f2b4b4c" width="900"/>
+</p>
+
+---
 
 ### 📧 Email Confirmation
-<img width="1284" height="2778" alt="image" src="https://github.com/user-attachments/assets/ae93ae26-0e7c-42a3-af7a-73d65dd5ee2e" />
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/ae93ae26-0e7c-42a3-af7a-73d65dd5ee2e" width="600"/>
+</p>
+
+---
 
 ### 📊 Analytics Dashboard
-<img width="2940" height="1912" alt="image" src="https://github.com/user-attachments/assets/4c0e282b-6194-4e56-8592-4fcb85fc8b8a" />
-<img width="2940" height="1912" alt="image" src="https://github.com/user-attachments/assets/5b58c2b5-ffdd-49d1-b4fc-4d66f709df9d" />
-
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/4c0e282b-6194-4e56-8592-4fcb85fc8b8a" width="900"/>
+  <br><br>
+  <img src="https://github.com/user-attachments/assets/5b58c2b5-ffdd-49d1-b4fc-4d66f709df9d" width="900"/>
+</p>
 
 ---
 
