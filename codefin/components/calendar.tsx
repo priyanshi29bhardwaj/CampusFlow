@@ -1,132 +1,117 @@
 "use client"
 
-import { useState } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { useEffect, useState } from "react"
+import FullCalendar from "@fullcalendar/react"
+import dayGridPlugin from "@fullcalendar/daygrid"
+import timeGridPlugin from "@fullcalendar/timegrid"
+import interactionPlugin from "@fullcalendar/interaction"
+import Swal from "sweetalert2"
 
-interface CalendarProps {
-  onDateSelect?: (date: Date) => void
-  selectedDate?: Date
+interface BookingEvent {
+  title: string
+  start: string
+  end: string
+  color: string
+  extendedProps: any
 }
 
-export function Calendar({ onDateSelect, selectedDate }: CalendarProps) {
-  const [currentDate, setCurrentDate] = useState(new Date())
+export default function VenueCalendar() {
 
-  const daysInMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
-  }
+  const [events, setEvents] = useState<BookingEvent[]>([])
 
-  const firstDayOfMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth(), 1).getDay()
-  }
+  /* ================= LOAD BOOKINGS ================= */
 
-  const days = Array.from({ length: daysInMonth(currentDate) }, (_, i) => i + 1)
-  const emptyDays = Array.from({ length: firstDayOfMonth(currentDate) })
+  useEffect(() => {
 
-  const handlePrevMonth = () => {
-    const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1)
-    // Don't allow going to past months if current month is the first month with future dates
-    const today = new Date()
-    if (newDate.getFullYear() < today.getFullYear() || 
-        (newDate.getFullYear() === today.getFullYear() && newDate.getMonth() < today.getMonth())) {
-      return // Don't navigate to past months
+    const fetchBookings = async () => {
+
+      try {
+
+        const res = await fetch("/api/venues/bookings")
+
+        const data = await res.json()
+
+        const formatted = data.map((booking: any) => {
+
+          let color = "#f59e0b" // pending
+
+          if (booking.status === "approved") color = "#22c55e"
+          if (booking.status === "rejected") color = "#ef4444"
+
+          return {
+            title: `${booking.venue_name} (${booking.club_name})`,
+            start: booking.booked_start,
+            end: booking.booked_end,
+            color,
+            extendedProps: booking
+          }
+
+        })
+
+        setEvents(formatted)
+
+      } catch (err) {
+        console.error("Calendar load error", err)
+      }
+
     }
-    setCurrentDate(newDate)
+
+    fetchBookings()
+
+  }, [])
+
+  /* ================= EVENT CLICK ================= */
+
+  const handleEventClick = (info: any) => {
+
+    const booking = info.event.extendedProps
+
+    Swal.fire({
+      title: booking.venue_name,
+      html: `
+        <b>Club:</b> ${booking.club_name}<br/>
+        <b>Attendees:</b> ${booking.expected_attendees}<br/>
+        <b>Status:</b> ${booking.status}<br/>
+        <b>Remarks:</b> ${booking.admin_remarks || "None"}
+      `,
+      icon: "info"
+    })
+
   }
-
-  const handleNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))
-  }
-
-  const handleDayClick = (day: number) => {
-    const selected = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
-    onDateSelect?.(selected)
-  }
-
-  const isSelected = (day: number) => {
-    if (!selectedDate) return false
-    return (
-      selectedDate.getDate() === day &&
-      selectedDate.getMonth() === currentDate.getMonth() &&
-      selectedDate.getFullYear() === currentDate.getFullYear()
-    )
-  }
-
-  const isPastDate = (day: number) => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const checkDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
-    checkDate.setHours(0, 0, 0, 0)
-    return checkDate < today
-  }
-
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ]
-
-  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
   return (
-    <div className="bg-card text-card-foreground border border-border rounded-lg p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="font-bold text-lg">
-          {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-        </h3>
-        <div className="flex gap-2">
-          <button onClick={handlePrevMonth} className="p-2 hover:bg-muted rounded-lg transition-colors">
-            <ChevronLeft size={20} />
-          </button>
-          <button onClick={handleNextMonth} className="p-2 hover:bg-muted rounded-lg transition-colors">
-            <ChevronRight size={20} />
-          </button>
-        </div>
-      </div>
 
-      {/* Day names */}
-      <div className="grid grid-cols-7 gap-2 mb-2">
-        {dayNames.map((day) => (
-          <div key={day} className="text-center text-xs font-semibold text-muted-foreground py-2">
-            {day}
-          </div>
-        ))}
-      </div>
+    <div className="bg-card border rounded-xl p-6">
 
-      {/* Calendar days */}
-      <div className="grid grid-cols-7 gap-2">
-        {emptyDays.map((_, i) => (
-          <div key={`empty-${i}`} />
-        ))}
-        {days.map((day) => {
-          const isPast = isPastDate(day)
-          return (
-            <button
-              key={day}
-              onClick={() => !isPast && handleDayClick(day)}
-              disabled={isPast}
-              className={`aspect-square flex items-center justify-center rounded-lg font-medium text-sm transition-colors ${
-                isPast
-                  ? "bg-muted/50 text-muted-foreground cursor-not-allowed opacity-50"
-                  : isSelected(day)
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted hover:bg-accent text-foreground hover:text-accent-foreground"
-              }`}
-            >
-              {day}
-            </button>
-          )
-        })}
-      </div>
+      <FullCalendar
+        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+
+        initialView="dayGridMonth"
+
+        height="auto"
+
+        events={events}
+
+        eventClick={handleEventClick}
+
+        headerToolbar={{
+          left: "prev,next today",
+          center: "title",
+          right: "dayGridMonth,timeGridWeek,timeGridDay"
+        }}
+
+        dayMaxEvents={true}
+
+        eventTimeFormat={{
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false
+        }}
+
+      />
+
     </div>
+
   )
+
 }

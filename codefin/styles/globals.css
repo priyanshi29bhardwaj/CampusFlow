@@ -123,3 +123,50 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ===== FullCalendar Styling ===== */
+
+.fc {
+  font-family: inherit;
+}
+
+.fc-toolbar-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.fc-button {
+  border-radius: 8px !important;
+  padding: 6px 12px !important;
+  font-size: 13px;
+}
+
+.fc-daygrid-day-number {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.fc-daygrid-day {
+  padding: 6px;
+}
+
+.fc-daygrid-day-frame {
+  border-radius: 8px;
+}
+
+.fc-event {
+  border-radius: 6px;
+  font-size: 12px;
+  padding: 3px 6px;
+  border: none;
+}
+
+.fc-timegrid-slot {
+  height: 45px;
+}
+
+.fc-col-header-cell {
+  font-weight: 600;
+  font-size: 13px;
+}

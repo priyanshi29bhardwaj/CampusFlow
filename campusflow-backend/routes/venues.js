@@ -14,5 +14,6 @@ router.get('/', venueController.listVenues);
 router.get('/:id/availability', venueController.checkAvailability); // ?start=...&end=...
 router.post('/:id/book', auth, roleCheck(['club_owner','admin']), venueController.bookVenue);
 router.get('/my-bookings', auth, roleCheck(['club_owner','admin']), venueController.getMyBookings);
+router.get("/bookings", venueController.getAllBookings);
 
 module.exports = router;
