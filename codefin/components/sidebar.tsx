@@ -63,6 +63,12 @@ export function Sidebar() {
       icon: Bell,
       roles: ["student", "club_owner", "admin"], // Everyone
     },
+    {
+      label: "Venue Calendar",
+      href: "/dashboard/venue-calendar",
+      icon: Calendar,
+      roles: ["club_owner", "admin"]
+    },
   ]
 
   // Filter menu items based on user role

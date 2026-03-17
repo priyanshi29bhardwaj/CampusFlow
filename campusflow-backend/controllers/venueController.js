@@ -132,8 +132,20 @@ exports.bookVenue = async (req, res) => {
     res.json(rows[0]);
 
   } catch (err) {
-    console.error('Book Venue Error:', err);
-    res.status(500).json({ error: err.message });
+
+    console.error("Book Venue Error:", err);
+  
+    // Handle overlap constraint error
+    if (err.constraint === "no_overlapping_bookings_per_venue") {
+      return res.status(400).json({
+        error: "This venue is already booked for the selected time slot."
+      });
+    }
+  
+    res.status(500).json({
+      error: "Something went wrong while booking the venue."
+    });
+  
   }
 };
 
