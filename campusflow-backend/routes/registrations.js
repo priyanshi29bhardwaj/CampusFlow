@@ -9,4 +9,36 @@ router.get('/my', auth, async (req, res) => {
   res.json(rows);
 });
 
+router.post('/', auth, async (req, res) => {
+  try {
+    const { event_id } = req.body
+    const userId = req.user.id
+
+    await db.query(
+      `INSERT INTO event_registrations (user_id, event_id)
+       VALUES ($1,$2)`,
+      [userId, event_id]
+    )
+
+    res.json({
+      message: "registered_successfully"
+    })
+
+  } catch (error) {
+
+    console.error("DB ERROR:", error) // debug
+
+    // 🔥 THIS IS THE KEY FIX
+    if (error.code === '23505') {
+      return res.status(400).json({
+        message: "already_registered"
+      })
+    }
+
+    res.status(500).json({
+      message: "server_error"
+    })
+  }
+})
+
 module.exports = router;

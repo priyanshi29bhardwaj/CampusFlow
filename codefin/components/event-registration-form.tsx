@@ -20,12 +20,13 @@ export function EventRegistrationForm({ eventId }: EventRegistrationFormProps) {
     registrationNumber: "",
     department: "",
     eventId: eventId || "",
-    numberOfTickets: "1",
+  
     paymentMethod: "upi",
     transactionId: "",
   })
 
   const [submitted, setSubmitted] = useState(false)
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false)
   const [events, setEvents] = useState<Array<{ id: string; name: string; registration_fee: number }>>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -64,27 +65,49 @@ export function EventRegistrationForm({ eventId }: EventRegistrationFormProps) {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      await apiRequest(`/api/events/${formData.eventId}/register`, {
-        method: "POST",
-        body: JSON.stringify({
-          numberOfTickets: parseInt(formData.numberOfTickets),
-          paymentMethod: formData.paymentMethod,
-          transactionId: formData.transactionId,
-        }),
-      })
-      setSubmitted(true)
-      setTimeout(() => setSubmitted(false), 5000)
-    } catch (error: any) {
-      console.error("Registration failed:", error)
-      alert(error.message || "Registration failed. Please try again.")
+  e.preventDefault()
+
+  try {
+    await apiRequest(`/api/registrations`, {
+      method: "POST",
+      body: JSON.stringify({
+        event_id: formData.eventId, // ✅ FIX 1 (IMPORTANT)
+        paymentMethod: formData.paymentMethod,
+        transactionId: formData.transactionId,
+      }),
+    })
+
+    setSubmitted(true)
+
+  } catch (error: any) {
+
+    console.log("ERROR RECEIVED:", error.message)
+
+    // ✅ FIX 2 (clean check)
+    if (error.message === "already_registered") {
+      setAlreadyRegistered(true)
+      return
     }
+
+    alert(error.message || "Registration failed")
   }
+}
 
   const selectedEvent = events.find((evt) => evt.id === formData.eventId)
-  const totalFee = selectedEvent ? (selectedEvent.registration_fee || 0) * Number.parseInt(formData.numberOfTickets) : 0
+  const totalFee = selectedEvent ? (selectedEvent.registration_fee || 0) : 0
 
+  if (alreadyRegistered) {
+  return (
+    <div className="bg-card text-card-foreground border border-border rounded-lg p-8 text-center">
+      <CheckCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+      <h2 className="text-2xl font-bold mb-2">Already Registered</h2>
+      <p className="text-muted-foreground">
+        You have already registered for this event.
+      </p>
+    </div>
+  )
+}
+  
   if (submitted) {
     return (
       <div className="bg-card text-card-foreground border border-border rounded-lg p-8 text-center">
@@ -191,7 +214,7 @@ export function EventRegistrationForm({ eventId }: EventRegistrationFormProps) {
         </div>
 
         {/* Event Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">Select Event</label>
             <select
@@ -215,21 +238,7 @@ export function EventRegistrationForm({ eventId }: EventRegistrationFormProps) {
             </select>
             {eventId && <p className="text-xs text-muted-foreground mt-1">Event pre-selected</p>}
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Number of Tickets</label>
-            <select
-              name="numberOfTickets"
-              value={formData.numberOfTickets}
-              onChange={handleChange}
-              className="w-full px-4 py-2 bg-background text-foreground border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              {[1, 2, 3, 4, 5].map((num) => (
-                <option key={num} value={num}>
-                  {num}
-                </option>
-              ))}
-            </select>
-          </div>
+
         </div>
 
         {totalFee > 0 && (
@@ -242,7 +251,7 @@ export function EventRegistrationForm({ eventId }: EventRegistrationFormProps) {
                 Total Amount Due: <span className="font-bold text-lg">₹{totalFee}</span>
               </p>
               <p className="text-xs text-muted-foreground">
-                ₹{selectedEvent?.registration_fee || 0} × {formData.numberOfTickets} = ₹{totalFee}
+                Event Fee: ₹{totalFee}
               </p>
             </div>
 
