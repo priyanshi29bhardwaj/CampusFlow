@@ -14,20 +14,22 @@ router.post('/', auth, async (req, res) => {
     const { event_id } = req.body;
 
     if (!event_id) {
-      return res.status(400).json({ error: 'Event ID is required' });
+      return res.status(400).json({ message: 'Event ID is required' });
     }
 
     await db.query(
       `INSERT INTO event_registrations (event_id, user_id)
-       VALUES ($1, $2)
-       ON CONFLICT (event_id, user_id) DO NOTHING`,
+       VALUES ($1, $2)`,
       [event_id, req.user.id]
     );
 
-    res.json({ message: 'Registered successfully' });
+    res.json({ message: 'registered_successfully' });
   } catch (error) {
+    if (error.code === '23505') {
+      return res.status(400).json({ message: 'already_registered' });
+    }
     console.error('Registration error:', error);
-    res.status(500).json({ error: 'Failed to register' });
+    res.status(500).json({ message: 'server_error' });
   }
 });
 

@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { CheckCircle } from "lucide-react"
+import { CheckCircle, AlertCircle } from "lucide-react"
 import { apiRequest } from "@/lib/api"
 
 interface EventRegistrationFormProps {
@@ -20,12 +20,12 @@ export function EventRegistrationForm({ eventId }: EventRegistrationFormProps) {
     registrationNumber: "",
     department: "",
     eventId: eventId || "",
-    numberOfTickets: "1",
     paymentMethod: "upi",
     transactionId: "",
   })
 
   const [submitted, setSubmitted] = useState(false)
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false)
   const [events, setEvents] = useState<Array<{ id: string; name: string; registration_fee: number }>>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -74,23 +74,37 @@ export function EventRegistrationForm({ eventId }: EventRegistrationFormProps) {
     }
   
     try {
-      await apiRequest(`/api/events/${selectedEventId}/register`, {
+      await apiRequest(`/api/registrations`, {
         method: "POST",
         body: JSON.stringify({
-          numberOfTickets: Number(formData.numberOfTickets),
-          paymentMethod: formData.paymentMethod,
-          transactionId: formData.transactionId,
+          event_id: selectedEventId,
         }),
       })
   
-      setSubmitted(true) // THIS was also missing
+      setSubmitted(true)
     } catch (err: any) {
-      alert(err.message || "Registration failed")
+      if (err.message === "already_registered") {
+        setAlreadyRegistered(true)
+      } else {
+        alert(err.message || "Registration failed")
+      }
     }
   }
 
   const selectedEvent = events.find((evt) => evt.id === formData.eventId)
-  const totalFee = selectedEvent ? (selectedEvent.registration_fee || 0) * Number.parseInt(formData.numberOfTickets) : 0
+  const totalFee = selectedEvent ? (selectedEvent.registration_fee || 0) : 0
+
+  if (alreadyRegistered) {
+    return (
+      <div className="bg-card text-card-foreground border border-border rounded-lg p-8 text-center">
+        <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
+        <h2 className="text-2xl font-bold mb-2">Already Registered</h2>
+        <p className="text-muted-foreground mb-6">
+          You have already registered for this event.
+        </p>
+      </div>
+    )
+  }
 
   if (submitted) {
     return (
@@ -100,7 +114,6 @@ export function EventRegistrationForm({ eventId }: EventRegistrationFormProps) {
         <p className="text-muted-foreground mb-6">
           Confirmation has been sent to your email. Check your inbox for event details and venue information.
         </p>
-        <Button onClick={() => setSubmitted(false)} className="rounded-lg hover:shadow-md transition-all">Register Another Event</Button>
       </div>
     )
   }
@@ -222,21 +235,6 @@ export function EventRegistrationForm({ eventId }: EventRegistrationFormProps) {
             </select>
             {eventId && <p className="text-xs text-muted-foreground mt-1">Event pre-selected</p>}
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Number of Tickets</label>
-            <select
-              name="numberOfTickets"
-              value={formData.numberOfTickets}
-              onChange={handleChange}
-              className="w-full px-4 py-2 bg-background text-foreground border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              {[1, 2, 3, 4, 5].map((num) => (
-                <option key={num} value={num}>
-                  {num}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
 
         {totalFee > 0 && (
@@ -249,7 +247,7 @@ export function EventRegistrationForm({ eventId }: EventRegistrationFormProps) {
                 Total Amount Due: <span className="font-bold text-lg">₹{totalFee}</span>
               </p>
               <p className="text-xs text-muted-foreground">
-                ₹{selectedEvent?.registration_fee || 0} × {formData.numberOfTickets} = ₹{totalFee}
+                Registration Fee: ₹{totalFee}
               </p>
             </div>
 
