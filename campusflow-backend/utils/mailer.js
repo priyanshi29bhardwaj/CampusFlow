@@ -9,22 +9,31 @@ const transporter = nodemailer.createTransport({
 });
 
 exports.sendRegistrationEmail = async (to, event) => {
-  await transporter.sendMail({
-    from: `"CampusFlow" <${process.env.EMAIL_USER}>`,
-    to,
-    subject: `🎉 Registration Confirmed for ${event.name}`,
-    html: `
-      <h2>Registration Successful!</h2>
-      <p>You are registered for:</p>
+  console.log("📨 Email function called for:", to);
 
-      <b>Event:</b> ${event.name}<br/>
-      <b>Date:</b> ${new Date(event.start_time).toLocaleString()}<br/>
-      <b>Venue:</b> ${event.venue_name}<br/>
+  try {
+    const info = await transporter.sendMail({
+      from: `"CampusFlow" <${process.env.EMAIL_USER}>`,
+      to,
+      subject: `🎉 Registration Confirmed for ${event.name}`,
+      html: `
+        <h2>Registration Successful!</h2>
+        <p>You are registered for:</p>
 
-      <br/>
-      <p>See you there! 🚀</p>
-      <hr/>
-      <small>CampusFlow Team</small>
-    `,
-  });
+        <b>Event:</b> ${event.name}<br/>
+        <b>Date:</b> ${new Date(event.start_time).toLocaleString()}<br/>
+        <b>Venue:</b> ${event.venue_name}<br/>
+
+        <br/>
+        <p>See you there! 🚀</p>
+        <hr/>
+        <small>CampusFlow Team</small>
+      `,
+    });
+
+    console.log("✅ Email sent:", info.response);
+
+  } catch (err) {
+    console.error("❌ Email error:", err);
+  }
 };

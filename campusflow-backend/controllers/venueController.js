@@ -187,6 +187,7 @@ exports.getAllBookings = async (req, res) => {
         vb.booked_end,
         vb.expected_attendees,
         vb.special_requirements,
+        vb.admin_remarks,
         vb.status
       FROM venue_bookings vb
       JOIN venues v ON v.id = vb.venue_id

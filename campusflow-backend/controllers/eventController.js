@@ -104,6 +104,7 @@ exports.getEvent = async (req, res) => {
 ===================================================== */
 exports.registerForEvent = async (req, res) => {
   try {
+    console.log("👤 USER:", req.user);
     const eventId = req.params.id;
     const { numberOfTickets = 1, paymentMethod, transactionId } = req.body;
     const userId = req.user.id;
@@ -147,6 +148,7 @@ exports.registerForEvent = async (req, res) => {
 
     /* SEND EMAIL */
     try {
+      console.log("📧 Attempting to send email to:", req.user.email)
       await sendRegistrationEmail(req.user.email, {
         name: event.name,
         start_time: event.start_time,

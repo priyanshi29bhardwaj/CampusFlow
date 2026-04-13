@@ -2,12 +2,18 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 if (!process.env.DATABASE_URL) {
-  console.error('❌ DATABASE_URL is not set. Create a .env file with DATABASE_URL=postgres://user:pass@host:5432/dbname');
+  console.error('❌ DATABASE_URL is not set.');
   process.exit(1);
 }
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+
+  ssl: isProduction
+    ? { rejectUnauthorized: false }
+    : false,
 });
 
 pool.on('connect', () => {

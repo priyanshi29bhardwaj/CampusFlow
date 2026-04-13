@@ -74,10 +74,12 @@ export function EventRegistrationForm({ eventId }: EventRegistrationFormProps) {
     }
   
     try {
-      await apiRequest(`/api/registrations`, {
+      await apiRequest(`/api/events/${selectedEventId}/register`, {
         method: "POST",
         body: JSON.stringify({
-          event_id: selectedEventId,
+          numberOfTickets: 1,
+          paymentMethod: formData.paymentMethod,
+          transactionId: formData.transactionId,
         }),
       })
   
