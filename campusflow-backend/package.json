@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "start": "node server.js",
     "dev": "nodemon server.js",
     "init-db": "node scripts/init-db.js",
     "seed-events": "node scripts/seed-events.js",
     "add-venue-constraints": "node scripts/add-venue-constraints.js"
+  },"engines": {
+    "node": "18.x"              
   },
   "keywords": [],
   "author": "",
